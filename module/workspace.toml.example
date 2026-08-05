@@ -1,0 +1,24 @@
+# Provider-neutral agent workspace manifest.
+#
+# Paths in this file are relative to this manifest unless they are absolute.
+# The target project is inspected but never written by the module.
+
+project_name = "Example Project"
+
+# A directory outside the target repository. Launch agents from this
+# directory when the provider discovers AGENTS.md/CLAUDE.md by walking up
+# from the current working directory.
+workspace_root = "../example-project-workspace"
+
+# Existing project checkout. It may be inside or outside workspace_root, but
+# all generated files must remain outside this directory.
+target_path = "../example-project"
+
+# Canonical, provider-neutral instruction content kept with this manifest.
+instruction_source = "../examples/project-template/AGENT.md"
+instruction_destinations = ["AGENT.md", "AGENTS.md", "CLAUDE.md"]
+
+# Canonical skills use the shared SKILL.md format. The destinations are
+# explicit provider projections; omit any provider that is not installed.
+skills_source = "../skills"
+skill_destinations = [".agents/skills", ".claude/skills"]

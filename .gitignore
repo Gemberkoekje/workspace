@@ -1,0 +1,4 @@
+# Local fixture output and editor state.
+tests/tmp/
+.DS_Store
+Thumbs.db

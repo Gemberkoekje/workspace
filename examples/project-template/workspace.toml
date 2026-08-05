@@ -1,0 +1,14 @@
+# Generic external agent workspace profile.
+#
+# Paths are relative to this manifest. Replace them with paths for the target
+# checkout; keep the generated workspace outside that checkout.
+
+project_name = "Example Project"
+workspace_root = "../example-project-workspace"
+target_path = "../example-project"
+
+instruction_source = "AGENT.md"
+instruction_destinations = ["AGENT.md", "AGENTS.md", "CLAUDE.md"]
+
+skills_source = "../../skills"
+skill_destinations = [".agents/skills", ".claude/skills"]
