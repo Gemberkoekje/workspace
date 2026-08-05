@@ -1,0 +1,12 @@
+# External workspace profile for the sibling Limit Theory Redux checkout.
+# All paths are relative so this profile is portable across machines.
+
+project_name = "Limit Theory Redux"
+workspace_root = "."
+target_path = "../ltheory"
+
+instruction_source = "profiles/ltheory/AGENT.md"
+instruction_destinations = ["AGENT.md", "AGENTS.md", "CLAUDE.md"]
+
+skills_source = "skills"
+skill_destinations = [".agents/skills", ".claude/skills"]

@@ -96,6 +96,31 @@ profile uses the shared skills directory directly. Workspace-managed commits
 follow Conventional Commits and must keep generated projections, secrets, and
 target-repository files out of the staged diff.
 
+## Limit Theory Redux profile
+
+This fork includes a relative `ltheory` profile for a sibling checkout. From
+the workspace root, run:
+
+```sh
+bash module/bootstrap.sh --config workspace.toml
+bash module/doctor.sh --config workspace.toml
+```
+
+The profile projects `profiles/ltheory/AGENT.md` and the canonical `skills/`
+tree into the workspace root. The target checkout remains separate and is
+never modified by the module.
+
+## Branches and worktrees
+
+The target path is branch-agnostic. Switching branches in the same checkout
+does not require a workspace change because the module never selects or edits a
+Git branch.
+
+For simultaneous `git worktree` checkouts, use a separate profile/config per
+worktree when their instructions or skills differ. A shared external workspace
+is safe only when those files are intentionally identical; otherwise the last
+bootstrap would project one worktree's guidance for all users.
+
 ## Safety properties
 
 - No network access or repository cloning.

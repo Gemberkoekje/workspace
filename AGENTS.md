@@ -1,24 +1,19 @@
-# AGENTS.md — workspace
+# Limit Theory Redux — external workspace instructions
 
-This repository is a small, provider-neutral external workspace module. It
-must remain independent of any particular project, service, language, or model
-provider.
+These instructions live in the separate `workspace` checkout and are
+projected into the provider files at its root. The target source checkout is
+the sibling directory `../ltheory`.
 
-The module writes only to paths explicitly named by a manifest, and refuses
-instruction or skill destinations inside the configured target repository.
-Keep synchronization non-destructive: unrelated provider skills and local
-project changes must survive a bootstrap.
+Keep the target repository free of generated agent instructions and provider
+skill projections. Preserve existing local changes in the target checkout;
+this workspace must never overwrite or reset them.
 
-Use `bash tests/test.sh` for the local fixture check. Do not add project
-credentials, generated provider projections, or a target repository checkout
-to this repository.
+When working on the project:
 
-## Git commits
-
-Use Conventional Commits for every commit made in a repository managed by
-this workspace: `type(scope): summary`, with the scope optional. Use a
-lowercase, imperative summary and one of the standard types such as `feat`,
-`fix`, `docs`, `refactor`, `test`, `build`, `ci`, `chore`, or `revert`.
-Record breaking changes with `!` or a `BREAKING CHANGE:` footer. Keep commits
-focused, inspect the staged diff before committing, and never include secrets,
-generated projections, or target-repository files by accident.
+- inspect the Rust and Lua boundaries before changing APIs or generated
+  bindings;
+- keep changes scoped to the requested surface and preserve unrelated local
+  work;
+- use the target repository's own build, format, and test commands;
+- verify behavior through the real project path, not only static inspection;
+- keep reusable guidance and provider configuration in this workspace.
