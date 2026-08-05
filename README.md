@@ -98,17 +98,29 @@ target-repository files out of the staged diff.
 
 ## Limit Theory Redux profile
 
-This fork includes a relative `ltheory` profile for a sibling checkout. From
-the workspace root, run:
+This fork includes a relative Limit Theory Redux profile. The expected layout
+is portable across machines:
+
+```text
+<parent>/
+├── ltheory/              target source checkout
+└── workspace/             this external workspace checkout
+```
+
+`workspace.toml` points to `../ltheory`, while the canonical project guidance
+lives in `profiles/ltheory/AGENT.md` and the project skill lives in
+`skills/ltheory-project/`. Nothing is written inside the target checkout.
+
+From this workspace root, run:
 
 ```sh
 bash module/bootstrap.sh --config workspace.toml
 bash module/doctor.sh --config workspace.toml
 ```
 
-The profile projects `profiles/ltheory/AGENT.md` and the canonical `skills/`
-tree into the workspace root. The target checkout remains separate and is
-never modified by the module.
+Then launch the agent or editor from this workspace root and open `../ltheory`
+as the project directory. If the two checkouts are not siblings on another
+machine, update only the relative `target_path` in `workspace.toml`.
 
 ## Branches and worktrees
 
