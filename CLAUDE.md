@@ -17,3 +17,11 @@ When working on the project:
 - use the target repository's own build, format, and test commands;
 - verify behavior through the real project path, not only static inspection;
 - keep reusable guidance and provider configuration in this workspace.
+
+## Version control
+
+Use Conventional Commits for project changes: use a standard type such as
+`feat`, `fix`, `docs`, `refactor`, `test`, `build`, `ci`, `chore`, or `revert`,
+followed by an optional scope and a focused lowercase imperative summary.
+Mark breaking changes with `!` or a `BREAKING CHANGE:` footer, and inspect the
+staged diff before committing.

@@ -34,6 +34,16 @@ Switching branches in the same checkout does not change the workspace target.
 When several worktrees are active, give each worktree its own profile if its
 instructions or skills differ; share one profile only when that is deliberate.
 
+## Version control
+
+- Use Conventional Commits: `type(scope): summary`, with an optional scope.
+- Keep summaries lowercase, imperative, and focused; use standard types such
+  as `feat`, `fix`, `docs`, `refactor`, `test`, `build`, `ci`, `chore`, or
+  `revert`.
+- Mark breaking changes with `!` or a `BREAKING CHANGE:` footer.
+- Inspect the staged diff before committing and keep secrets, generated
+  projections, and target-repository files out of the commit.
+
 ## Safety
 
 The module refuses configured destinations that resolve inside `target_path`.
