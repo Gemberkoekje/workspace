@@ -16,7 +16,9 @@ When working on the project:
   work;
 - use the target repository's own build, format, and test commands;
 - verify behavior through the real project path, not only static inspection;
-- keep reusable guidance and provider configuration in this workspace.
+- keep reusable guidance and provider configuration in this workspace;
+- keep workspace guidance generic: do not reference singular branches, one-off
+  states, or transient findings; write for the project as it evolves.
 
 ## Version control
 

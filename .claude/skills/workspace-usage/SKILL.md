@@ -27,6 +27,8 @@ making it available to the tools that work from the external workspace root.
   paths, instructions, or skills.
 - Treat any drift report as a synchronization problem, not a reason to edit
   generated files by hand.
+- Keep workspace guidance generic: no singular branch names, commit hashes,
+  one-off states, or transient findings; write for the project as it evolves.
 
 ## Branches and worktrees
 

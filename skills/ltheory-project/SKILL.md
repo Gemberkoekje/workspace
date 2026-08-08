@@ -36,18 +36,10 @@ truth. Practical commands:
   executable path, so launching `target/debug/ltr.exe` from anywhere still
   finds repo assets.
 
-Rendering is threaded by default on `feat/multithreaded_rendering` (the
-`--render-thread` CLI flag was removed; threaded rendering became the default).
-A healthy threaded run shows log lines "Render thread spawned" /
-"Render thread started successfully" / "GL context made current on render
-thread" and clean shutdown stats (commands_processed / draw_calls /
-frame_count) on exit.
-
 ## Branch switches
 
-- Fetch before switching: the local remote-tracking ref may be stale. The
-  `feat/multithreaded_rendering` branch has been found 60+ commits behind
-  origin after a long period without fetches.
+- Fetch before switching: the local remote-tracking ref may be stale and far
+  behind origin after a long period without fetches.
 - Stash uncommitted work first (`git stash push -u`) when local edits touch
   files that differ between branches; `git checkout` refuses to switch with
   conflicting local modifications. The stash is recoverable afterwards.
