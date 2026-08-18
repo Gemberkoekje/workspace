@@ -27,6 +27,10 @@ description: Comment/review conventions for this codebase — comments describe 
 - "That should be a rule" → encode it in the governing instruction file (skill/AGENTS/README),
   not just in memory or a one-off comment.
 
+## Comments for technically complicated code — AI-agent rule
+
+When writing or modifying technically complicated code, add comments where ownership, lifecycle, synchronization, backend, FFI, or other safety-sensitive rationale is not obvious from the implementation. Explain **why** the structure exists, the invariant or constraint it preserves, and the failure mode it prevents. Do not add comments that merely restate self-evident code; straightforward code does not need extra commentary.
+
 ## Review checklist
 
 - Every comment names only the code it sits in.
