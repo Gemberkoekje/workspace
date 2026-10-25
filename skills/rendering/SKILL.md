@@ -1,40 +1,74 @@
 ---
 name: rendering
-description: Render architecture — the classic direct-GL path, the render module layout, and the in-progress multithreaded command-buffer render thread (Renderer/RenderCommand/RenderThread) and how to activate it. Use when touching engine/lib/phx/src/render or Lua draw code.
+description: Render architecture — the wgpu renderer behind Renderer/RenderCommand, the dedicated render thread, the Lua render API (passes, pipelines, materials, scene list, Imm), shaders and the validation harness. Use when touching engine/lib/phx/src/render, window/wgpu_render.rs, res/shader or Lua draw code.
 ---
 
 # Rendering
 
-All rendering code lives in `engine/lib/phx/src/render/`. Two paths exist:
+The renderer runs on wgpu (Vulkan, Metal or DX12: the platform's native API;
+`WGPU_BACKEND=vulkan|metal|dx12` overrides it for diagnostics). There is no
+OpenGL backend and no backend switch. All rendering code lives in
+`engine/lib/phx/src/render/`; the docs are in `doc/engine/` (start with
+`render-thread.md` and `shader-system.md`; `render-api-v2.md` and
+`wgpu-migration-gaps.md` are migration history).
 
-## 1. Classic direct-GL path (the one actually live)
-
-Lua drives GL directly on the main thread through FFI-exposed types: `Draw`, `Shader`/`ShaderState`, `Tex1d/2d/3d/Cube`, `Mesh`, `RenderState`, `RenderTarget`, `Viewport`, `Font`, `Color`, etc. (one Rust file per type in `render/`). Shaders/assets are in `res/shader/`, meshes in `res/mesh/`. Lua-side pipeline code is in `script/Render/`.
-
-## 2. Multithreaded render thread (branch `feat/multithreaded_rendering`, dormant by default)
-
-A command-buffer renderer in `engine/lib/phx/src/render/thread/`. Status and completion plan: `ai/multithreaded_rendering.md` — read it before working here.
+## Layers
 
 ```
-Main thread (game + Lua)                      Render thread (owns GL context)
-Renderer.submit(RenderCommand) ─► bounded crossbeam channel ─► RenderThread.run() → gl::*
-        fence/sync, shader-reload results, context handoff flow back over channels
+Lua (script/Render, script/Modules/Rendering, materials)
+  -> FFI types: Renderer, RenderPass, Pipeline, Material, SceneList, Imm, Tex*, Mesh, Shader
+  -> main-thread Renderer (render/thread/renderer_threaded.rs): records passes,
+     owns the uniform/vertex rings and resource ids
+  -> bounded RenderCommand channel
+  -> render thread (render_thread.rs) -> WgpuCommandExecutor
+     (render/thread/command_executor_wgpu.rs + command_executor_wgpu/)
+  -> wgpu device, queue, surface
 ```
 
-Key pieces:
+- `render/gpu/` holds the backend-independent front end: pipelines, samplers,
+  texture views, bind groups, materials, the scene list, the immediate batcher
+  (`imm.rs`), the uniform/vertex staging rings, readback and procedural
+  generation.
+- The executor owns every GPU object and the surface; nothing on the main
+  thread calls wgpu.
+- Startup: `Engine::new` creates the window with winit, builds the surface
+  bundle (`window/wgpu_render.rs`) and calls `Renderer::start`. Dropping
+  `Renderer` joins the render thread; `Engine` declares `winit_window` after
+  `renderer` so the surface (made from the window's raw handles) goes first.
+- `Renderer::new_headless()` (tests only) has no device; it answers fences and
+  reply channels and returns ring memory.
 
-- `renderer.rs` — main-thread `Renderer` handle: spawns the `"RenderThread"` OS thread, moves the `WindowGlContext` into it; `submit`/`try_submit`, fence-based `sync`, triple-buffered frame pacing (`MAX_FRAMES_IN_FLIGHT = 3`), blocking `reload_shader`, stats via `Arc<SharedRenderStats>` atomics.
-- `render_command.rs` — ~80 self-contained `Send` command variants: GL state, uniforms (by location and by name via per-shader cache), texture binds, FBO push/pop, mesh draws (plain/instanced/immediate), resource creation (`CreateShader/CreateTexture2D/CreateMesh` + `*ByResource` variants), UBOs, `Resize`, `SwapBuffers`, `Fence`, `Shutdown`.
-- `render_thread.rs` — blocking `recv()` loop with one big match executor; owns `HashMap<ResourceId, GpuResource>`, uniform-location caches, redundant-bind skipping, FBO stack.
-- `window/window_gl_context.rs` — `extract_gl_context()` / `restore_gl_context()` move the GL context (and surface — macOS requires main-thread surface creation) between threads; `winit_window.redraw()` skips `swap_buffers` while extracted.
-- `renderer_queue.rs` — the Lua FFI surface (`#[luajit_ffi_gen::luajit_ffi] impl Renderer`), reachable as `Engine:renderer()`.
-- `camera_render_data.rs`, `entity_render_data.rs`, `render_batch.rs` — batching layer (in progress on this branch).
+## Shaders
 
-Activation: `cargo run -- --render-thread ...` (default off) → `MainLoop::new_events` → `Engine::start_renderer()`. `Engine` holds `renderer: Option<Renderer>`.
+GLSL 330 sources in `res/shader/` are preprocessed (`#include`, `#group N`)
+and adapted for naga (`command_executor_wgpu/shader.rs`). Every uniform a
+shader reads must sit in a `#group` uniform block or be a sampler declared
+under a `#group`; there is no per-name uniform setter. Shared blocks
+(`ViewBlock`, `DrawBlock`) have Rust mirrors in `render/gpu/` with layout
+checks (`render/thread/layout_parity.rs`). Hot reload keeps the last working
+program on failure.
 
 ## Guidelines
 
-- Every `RenderCommand` must stay `Send` and self-contained (no GL calls on the main thread while the context is extracted).
-- New GL-visible functionality must be added to both paths (or as a command + `*ByResource` variant) until the transition completes.
-- Changes to `renderer_queue.rs` regenerate `Renderer.lua` in `ffi_gen`/`meta` — commit those (see `luajit-ffi-bindings` skill).
-- Test with `cargo run -- RenderingTest` (and with/without `--render-thread`).
+- Every `RenderCommand` must stay `Send` and self-contained.
+- Resource writes (texture uploads, buffer writes) are not allowed inside an
+  open pass: wgpu orders `queue.write_*` before the whole submission.
+- Changes to FFI-exposed render types regenerate files in `ffi_gen`/`meta` —
+  commit those (see `luajit-ffi-bindings` skill).
+- `LTHEORY_WGPU_FATAL=1` turns the first wgpu validation error into a panic;
+  `LTHEORY_WGPU_DIAG` / `LTHEORY_WGPU_DUMP` are opt-in diagnostics
+  (`command_executor_wgpu/diag.rs`).
+
+## Validation
+
+`tools/render_validation/` (see its README): 13 pixel-probe supervisors, deterministic
+scene captures (`capture.py`, `compare.py`), `auto_exposure_test.py` and
+`hot_reload_probe.py`, all run as `<script> wgpu`. Captures differ per driver
+and platform: for a change that must not alter pixels, build the earlier
+commit in a separate worktree, capture there with its own
+`LTHEORY_VALIDATION_ARTIFACT_DIR`, and run
+`compare.py wgpu --reference <ref-artifacts>/captures/wgpu`. Run GPU suites
+serially, never two at once.
+
+GPU unit tests are `#[ignore]`d:
+`cargo test -p phx --lib command_executor_wgpu -- --ignored --test-threads=1`.

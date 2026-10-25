@@ -34,7 +34,8 @@ Useful flags (see `engine/bin/ltr/src/main.rs`):
 - `-e, --entry-point <path>` — starting Lua script (default `./script/Main.lua`)
 - `-c, --console-log <bool>` — console logging (default true)
 - `-l, --log-dir <dir>` — also write log to file
-- `-r, --render-thread` — enable the multithreaded renderer (default off; see `rendering` skill)
+- `--present-mode <vsync|no-vsync>` — force the present mode over what Lua requests
+- `--stats-server <port>` — live render-stats dashboard (needs the `stats-server` feature)
 - `-n, --no-color` — disable colored output
 
 ## Test
