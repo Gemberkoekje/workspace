@@ -9,7 +9,8 @@ The renderer runs on wgpu (Vulkan, Metal or DX12: the platform's native API;
 `WGPU_BACKEND=vulkan|metal|dx12` overrides it for diagnostics). There is no
 OpenGL backend and no backend switch. All rendering code lives in
 `engine/lib/phx/src/render/`; the docs are in `doc/engine/` (start with
-`render-thread.md` and `shader-system.md`; `render-api-v2.md` and
+`renderer.md`, the contributor guide: ownership table, API levels, rules,
+waits; then `render-thread.md` and `shader-system.md`. `render-api-v2.md` and
 `wgpu-migration-gaps.md` are migration history).
 
 ## Layers
@@ -50,6 +51,14 @@ program on failure.
 
 ## Guidelines
 
+- Every uniform a shader reads must sit in a `#group` block; a read loose
+  uniform fails the compile.
+- A `RenderPass` handle records only into its own pass; bind groups from
+  `Renderer:createBindGroup` are objects released when collected.
+- Textures read only with `texelFetch` (data, not images) get
+  `TexUsage.Data`, so 32-bit floats stay exact on every adapter.
+- Captures must not depend on GPU timing: anything that consumes async
+  results resolves them at a fixed frame latency under `LTHEORY_CAPTURE`.
 - Every `RenderCommand` must stay `Send` and self-contained.
 - Resource writes (texture uploads, buffer writes) are not allowed inside an
   open pass: wgpu orders `queue.write_*` before the whole submission.
