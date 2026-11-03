@@ -33,9 +33,10 @@ Lua (script/Render, script/Modules/Rendering, materials)
 - The executor owns every GPU object and the surface; nothing on the main
   thread calls wgpu.
 - Startup: `Engine::new` creates the window with winit, builds the surface
-  bundle (`window/wgpu_render.rs`) and calls `Renderer::start`. Dropping
-  `Renderer` joins the render thread; `Engine` declares `winit_window` after
-  `renderer` so the surface (made from the window's raw handles) goes first.
+  bundle (`window/wgpu_render.rs`) and calls `Renderer::start`. The surface
+  holds an `Arc` of the window. Dropping `Renderer` sends `Shutdown` and
+  joins the render thread; the thread clears `running` when it ends, so a
+  dead render thread makes sends no-ops and waits return.
 - `Renderer::new_headless()` (tests only) has no device; it answers fences and
   reply channels and returns ring memory.
 
